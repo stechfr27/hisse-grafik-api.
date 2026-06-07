@@ -11,4 +11,4 @@ services:
       - key: HOST_URL
         # Deploy bittikten sonra buraya Render URL'ini yaz:
         # https://hisse-grafik-api.onrender.com
-        value: https://BURAYA-RENDER-URL-YAZ.onrender.com
+        value: https://hisse-grafik-api.onrender.com
