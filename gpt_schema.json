@@ -1,0 +1,178 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BIST Grafik Ajanı",
+    "description": "BIST hisse senetlerinin TradingView 5dk mum grafiklerini otomatik screenshot olarak getirir. İki aşamalı akış: prepareChart → captureChart.",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://BURAYA-RAILWAY-URL-YAZ.railway.app",
+      "description": "Grafik Ajanı API Sunucusu"
+    }
+  ],
+  "paths": {
+    "/prepare-chart": {
+      "get": {
+        "operationId": "prepareChart",
+        "summary": "Grafiği hazırla — session_id al",
+        "description": "TradingView'de belirtilen BIST hissesinin 5dk mum grafiğini hazırlar ve session_id döner. Bu session_id ile captureChart çağrılır.",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": true,
+            "description": "BIST hisse kodu (büyük harf). Örnek: THYAO, ASELS, EREGL, GARAN, SASA, BIMAS, KCHOL",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "target_date",
+            "in": "query",
+            "required": false,
+            "description": "Belirli bir gün için YYYY-MM-DD formatında tarih. Örnek: 2026-06-02. Boş bırakılırsa güncel (bugün) grafik.",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "required": false,
+            "description": "Mum zaman aralığı. Sabit değer: 5m. Değiştirilemez.",
+            "schema": { "type": "string", "default": "5m" }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "description": "Görünüm tipi. session = BIST seans saatleri (09:55–18:10).",
+            "schema": { "type": "string", "default": "session" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grafik hazırlandı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok":           { "type": "boolean" },
+                    "status":       { "type": "string", "example": "ready_for_capture" },
+                    "session_id":   { "type": "string", "description": "captureChart'a verilecek oturum kimliği" },
+                    "symbol":       { "type": "string" },
+                    "interval":     { "type": "string", "example": "5dk" },
+                    "target_start": { "type": "string", "example": "02.06.2026 09:55" },
+                    "target_end":   { "type": "string", "example": "02.06.2026 18:10" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hazırlama başarısız",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok":           { "type": "boolean", "example": false },
+                    "status":       { "type": "string", "example": "prepare_failed" },
+                    "failed_stage": { "type": "string" },
+                    "error":        { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/capture-chart": {
+      "get": {
+        "operationId": "captureChart",
+        "summary": "Hazırlanmış grafiğin ekran görüntüsünü al",
+        "description": "prepareChart'tan dönen session_id ile ekran görüntüsü alır ve screenshot_url döner.",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "description": "prepareChart'tan dönen session_id değeri",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ekran görüntüsü başarıyla alındı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok":             { "type": "boolean" },
+                    "status":         { "type": "string", "example": "captured" },
+                    "screenshot_url": { "type": "string", "description": "Grafik PNG görselinin tam URL'si" },
+                    "symbol":         { "type": "string" },
+                    "interval":       { "type": "string" },
+                    "target_start":   { "type": "string" },
+                    "target_end":     { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "session_id bulunamadı veya süresi doldu"
+          },
+          "500": {
+            "description": "Ekran görüntüsü alınamadı"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Servis durumu kontrolü",
+        "responses": {
+          "200": {
+            "description": "Servis durumu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok":              { "type": "boolean" },
+                    "version":         { "type": "string" },
+                    "browser_mode":    { "type": "string" },
+                    "active_sessions": { "type": "integer" },
+                    "now_istanbul":    { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/debug/range-target": {
+      "get": {
+        "operationId": "debugRangeTarget",
+        "summary": "Hedef seans aralığını test et",
+        "parameters": [
+          {
+            "name": "target_date",
+            "in": "query",
+            "required": false,
+            "description": "Test edilecek tarih YYYY-MM-DD",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hedef aralık bilgisi"
+          }
+        }
+      }
+    }
+  }
+}

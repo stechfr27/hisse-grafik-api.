@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: hisse-grafik-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    # Playwright + Chromium için en az 512MB RAM gerekir
+    # Free plan: 512MB — sıkışırsa Starter'a geç (1GB)
+    plan: free
+    envVars:
+      - key: HOST_URL
+        # Deploy bittikten sonra buraya Render URL'ini yaz:
+        # https://hisse-grafik-api.onrender.com
+        value: https://BURAYA-RENDER-URL-YAZ.onrender.com
